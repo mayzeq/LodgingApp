@@ -18,35 +18,30 @@ namespace LodgingApp.Data
         {
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {
-                entity.SetTableName(entity.GetTableName()); // Реализуйте ToSnakeCase()
+                entity.SetTableName(entity.GetTableName());
                 foreach (var property in entity.GetProperties())
                     property.SetColumnName(property.Name);
             }
 
-            // Связь Admin -> Lodging (один ко многим)
             modelBuilder.Entity<Admin>()
                 .HasMany(a => a.Lodgings)
                 .WithOne(l => l.Admin)
                 .HasForeignKey(l => l.AdminId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Связь User -> Booking (один ко многим)
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Bookings)
                 .WithOne(b => b.User)
                 .HasForeignKey(b => b.UserId);
 
-            // Уникальный email для пользователя
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
-            // Статус жилья по умолчанию
             modelBuilder.Entity<Lodging>()
                 .Property(l => l.Status)
-                .HasDefaultValue("Available");
+                .HasDefaultValue("Доступно");
 
-            // Тип админа (ограничение значений)
             modelBuilder.Entity<Admin>()
                 .Property(a => a.Type)
                 .HasConversion<string>()

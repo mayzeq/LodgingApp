@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\Interfaces\" />
+    <Folder Include="Controllers\" />
     <Folder Include="Domain\DTO\" />
   </ItemGroup>
 
