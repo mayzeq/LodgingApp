@@ -40,7 +40,7 @@ namespace LodgingApp.Data
 
             modelBuilder.Entity<Lodging>()
                 .Property(l => l.Status)
-                .HasDefaultValue("Доступно");
+                .HasDefaultValue(LodgingStatus.Доступно);
 
             modelBuilder.Entity<Admin>()
                 .Property(a => a.Type)
