@@ -11,12 +11,10 @@ using Microsoft.OpenApi.Models;
 using LodgingApp.Data;
 using LodgingApp.Domain.Interfaces;
 using LodgingApp.Infrastructure.Repositories;
-using LodgingApp.Domain.Services;
-using LodgingApp.Domain.Mapping;
-using LodgingApp.Domain.Options;
-using AutoMapper;
 using LodgingApp.Application.Services;
-using static LodgingApp.Domain.Interfaces.IRepository;
+using LodgingApp.Application.Options;
+using LodgingApp.Application.Mapping;
+using AutoMapper;
 
 namespace LodgingApp
 {
@@ -51,7 +49,6 @@ namespace LodgingApp
 
             builder.Services.AddAuthorization();
 
-            builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<ILodgingRepository, LodgingRepository>();
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();

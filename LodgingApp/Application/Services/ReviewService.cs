@@ -2,7 +2,7 @@
 using LodgingApp.Domain.Entities;
 using LodgingApp.Domain.Interfaces;
 
-namespace LodgingApp.Domain.Services
+namespace LodgingApp.Application.Services
 {
     public class ReviewService
     {

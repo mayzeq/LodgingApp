@@ -2,7 +2,7 @@
 using LodgingApp.Domain.DTOs;
 using LodgingApp.Domain.Entities;
 
-namespace LodgingApp.Domain.Mapping
+namespace LodgingApp.Application.Mapping
 {
     public class MappingProfile : Profile
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using LodgingApp.Domain.Services;
 using LodgingApp.Domain.DTOs;
+using LodgingApp.Application.Services;
 
 namespace LodgingApp.API.Controllers
 {

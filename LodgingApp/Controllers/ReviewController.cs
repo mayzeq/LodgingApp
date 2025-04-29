@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using AutoMapper;
-using LodgingApp.Domain.Services;
 using LodgingApp.Domain.Entities;
 using LodgingApp.Domain.DTOs;
+using LodgingApp.Application.Services;
 
 namespace LodgingApp.API.Controllers
 {

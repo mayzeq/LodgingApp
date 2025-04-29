@@ -1,4 +1,4 @@
-﻿namespace LodgingApp.Domain.Options
+﻿namespace LodgingApp.Application.Options
 {
     public class JwtOptions
     {
