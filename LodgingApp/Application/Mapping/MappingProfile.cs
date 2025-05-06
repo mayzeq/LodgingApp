@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using LodgingApp.Domain.DTOs;
+using LodgingApp.Domain.ValueObjects;
 using LodgingApp.Domain.Entities;
 
 namespace LodgingApp.Application.Mapping
@@ -8,12 +8,12 @@ namespace LodgingApp.Application.Mapping
     {
         public MappingProfile()
         {
-            CreateMap<RegisterDto, User>();
-            CreateMap<LoginDto, User>();
-            CreateMap<CreateLodgingDto, Lodging>();
-            CreateMap<CreateBookingDto, Booking>();
-            CreateMap<CreatePaymentDto, Payment>();
-            CreateMap<CreateReviewDto, Review>();
+            CreateMap<RegistrationRequest, User>();
+            CreateMap<LoginRequest, User>();
+            CreateMap<LodgingCreation, Lodging>();
+            CreateMap<BookingRequest, Booking>();
+            CreateMap<PaymentCreation, Payment>();
+            CreateMap<ReviewCreation, Review>();
         }
     }
 }

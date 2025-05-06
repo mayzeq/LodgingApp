@@ -1,29 +1,39 @@
-﻿using System;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using BCrypt.Net;
 using LodgingApp.Domain.Entities;
-using LodgingApp.Domain.DTOs;
-using LodgingApp.Domain.Interfaces;
+using LodgingApp.Domain.ValueObjects;
+using LodgingApp.Domain.Services.Contracts;
 
-namespace LodgingApp.Application.Services
+namespace LodgingApp.Domain.Services.UseCases
 {
-    public class AuthService
+    /// <summary>
+    /// Сервис для управления аутентификацией и авторизацией пользователей
+    /// </summary>
+    public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepo;
         private readonly IConfiguration _config;
 
+        /// <summary>
+        /// Инициализирует новый экземпляр класса AuthService
+        /// </summary>
+        /// <param name="userRepo">Репозиторий пользователей</param>
+        /// <param name="config">Конфигурация приложения</param>
         public AuthService(IUserRepository userRepo, IConfiguration config)
         {
             _userRepo = userRepo;
             _config = config;
         }
 
-        public async Task<User> RegisterAsync(RegisterDto dto)
+        /// <summary>
+        /// Регистрирует нового пользователя
+        /// </summary>
+        /// <param name="dto">Данные для регистрации</param>
+        /// <returns>Зарегистрированный пользователь</returns>
+        /// <exception cref="InvalidOperationException">Выбрасывается, если имя пользователя уже существует</exception>
+        public async Task<User> RegisterAsync(RegistrationRequest dto)
         {
             var existing = await _userRepo.GetAllAsync();
             if (existing.Any(u => u.Username == dto.Username))
@@ -41,7 +51,13 @@ namespace LodgingApp.Application.Services
             return user;
         }
 
-        public async Task<string> LoginAsync(LoginDto dto)
+        /// <summary>
+        /// Выполняет вход пользователя и генерирует JWT токен
+        /// </summary>
+        /// <param name="dto">Данные для входа</param>
+        /// <returns>JWT токен для авторизации</returns>
+        /// <exception cref="InvalidOperationException">Выбрасывается при неверных учетных данных</exception>
+        public async Task<string> LoginAsync(LoginRequest dto)
         {
             var user = (await _userRepo.GetAllAsync()).FirstOrDefault(u => u.Username == dto.Username);
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.Password))

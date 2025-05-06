@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace LodgingApp.Domain.Interfaces
+namespace LodgingApp.Domain
 {
     public interface IRepository
     {

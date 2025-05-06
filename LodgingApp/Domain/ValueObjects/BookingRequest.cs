@@ -1,9 +1,9 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace LodgingApp.Domain.DTOs
+namespace LodgingApp.Domain.ValueObjects
 {
-    public class CreateBookingDto
+    public class BookingRequest
     {
         [Required]
         public int UserId { get; set; }

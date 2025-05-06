@@ -6,10 +6,10 @@
         public int UserId { get; set; }
         public int LodgingId { get; set; }
         public int Rating { get; set; } 
-        public string Comment { get; set; }
+        public string? Comment { get; set; }
         public DateTime Date { get; set; } = DateTime.UtcNow;
 
-        public User User { get; set; }
-        public Lodging Lodging { get; set; }
+        public required User User { get; set; }
+        public required Lodging Lodging { get; set; }
     }
 }

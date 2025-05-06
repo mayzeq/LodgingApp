@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace LodgingApp.Domain.DTOs
+namespace LodgingApp.Domain.ValueObjects
 {
-    public class CreateReviewDto
+    public class ReviewCreation
     {
         [Required]
         public int UserId { get; set; }
@@ -10,6 +10,6 @@ namespace LodgingApp.Domain.DTOs
         public int LodgingId { get; set; }
         [Range(1, 5)]
         public int Rating { get; set; }
-        public string Comment { get; set; }
+        public string? Comment { get; set; }
     }
 }

@@ -1,9 +1,9 @@
 ﻿using LodgingApp.Data;
 using LodgingApp.Domain.Entities;
-using LodgingApp.Domain.Interfaces;
+using LodgingApp.Domain.Services.Contracts;
 
 
-namespace LodgingApp.Infrastructure.Repositories
+namespace LodgingApp.Domain.Repositories
 {
     public class UserRepository : Repository<User>, IUserRepository
     {

@@ -9,12 +9,12 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using LodgingApp.Data;
-using LodgingApp.Domain.Interfaces;
-using LodgingApp.Infrastructure.Repositories;
-using LodgingApp.Application.Services;
 using LodgingApp.Application.Options;
 using LodgingApp.Application.Mapping;
 using AutoMapper;
+using LodgingApp.Domain.Repositories;
+using LodgingApp.Domain.Services.UseCases;
+using LodgingApp.Domain.Services.Contracts;
 
 namespace LodgingApp
 {
@@ -77,7 +77,7 @@ namespace LodgingApp
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     In = ParameterLocation.Header,
-                    Description = "Введите 'Bearer {token}'",
+                    Description = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ 'Bearer {token}'",
                     Name = "Authorization",
                     Type = SecuritySchemeType.ApiKey
                 });

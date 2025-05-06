@@ -9,8 +9,8 @@
         public PaymentStatus Status { get; set; } = PaymentStatus.Ожидание;
         public DateTime Date { get; set; } = DateTime.UtcNow;
 
-        public User User { get; set; }
-        public Booking Booking { get; set; }
+        public required User User { get; set; }
+        public required Booking Booking { get; set; }
     }
 
     public enum PaymentStatus

@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using LodgingApp.Domain.Interfaces;
-using static LodgingApp.Domain.Interfaces.IRepository;
+using static LodgingApp.Domain.IRepository;
 
 namespace LodgingApp.Data
 {
