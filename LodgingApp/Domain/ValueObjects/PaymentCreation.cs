@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace LodgingApp.Domain.DTOs
+namespace LodgingApp.Domain.ValueObjects
 {
-    public class CreatePaymentDto
+    public class PaymentCreation
     {
         [Required]
         public int UserId { get; set; }

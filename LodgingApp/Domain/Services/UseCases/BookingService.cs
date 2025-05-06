@@ -1,21 +1,38 @@
 ﻿using System;
 using System.Threading.Tasks;
 using LodgingApp.Domain.Entities;
-using LodgingApp.Domain.Interfaces;
+using LodgingApp.Domain.Services.Contracts;
 
-namespace LodgingApp.Application.Services
+namespace LodgingApp.Domain.Services.UseCases
 {
-    public class BookingService
+    /// <summary>
+    /// Сервис для управления бронированиями жилья
+    /// </summary>
+    public class BookingService : IBookingService
     {
         private readonly IBookingRepository _bookingRepo;
         private readonly ILodgingRepository _lodgingRepo;
 
+        /// <summary>
+        /// Инициализирует новый экземпляр класса BookingService
+        /// </summary>
+        /// <param name="bookingRepo">Репозиторий бронирований</param>
+        /// <param name="lodgingRepo">Репозиторий жилья</param>
         public BookingService(IBookingRepository bookingRepo, ILodgingRepository lodgingRepo)
         {
             _bookingRepo = bookingRepo;
             _lodgingRepo = lodgingRepo;
         }
 
+        /// <summary>
+        /// Создает новое бронирование
+        /// </summary>
+        /// <param name="userId">Идентификатор пользователя</param>
+        /// <param name="lodgingId">Идентификатор жилья</param>
+        /// <param name="start">Дата заезда</param>
+        /// <param name="end">Дата выезда</param>
+        /// <returns>Созданное бронирование</returns>
+        /// <exception cref="InvalidOperationException">Выбрасывается, если жилье недоступно или даты некорректны</exception>
         public async Task<Booking> CreateAsync(int userId, int lodgingId, DateTime start, DateTime end)
         {
             var lodging = await _lodgingRepo.GetByIdAsync(lodgingId);
@@ -43,6 +60,11 @@ namespace LodgingApp.Application.Services
             return booking;
         }
 
+        /// <summary>
+        /// Подтверждает бронирование
+        /// </summary>
+        /// <param name="bookingId">Идентификатор бронирования</param>
+        /// <exception cref="InvalidOperationException">Выбрасывается, если бронирование не найдено</exception>
         public async Task ConfirmAsync(int bookingId)
         {
             var booking = await _bookingRepo.GetByIdAsync(bookingId);
@@ -52,6 +74,11 @@ namespace LodgingApp.Application.Services
             await _bookingRepo.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Отменяет бронирование
+        /// </summary>
+        /// <param name="bookingId">Идентификатор бронирования</param>
+        /// <exception cref="InvalidOperationException">Выбрасывается, если бронирование не найдено</exception>
         public async Task CancelAsync(int bookingId)
         {
             var booking = await _bookingRepo.GetByIdAsync(bookingId);

@@ -1,16 +1,16 @@
 ﻿using System.ComponentModel.DataAnnotations;
-namespace LodgingApp.Domain.DTOs
+namespace LodgingApp.Domain.ValueObjects
 {
-    public class CreateLodgingDto
+    public class LodgingCreation
     {
         [Required]
         public int AdminId { get; set; }
         [Required]
-        public string Title { get; set; }
+        public required string Title { get; set; }
         [Range(0, double.MaxValue)]
         public decimal Price { get; set; }
         [Required]
-        public string Location { get; set; }
-        public string Description { get; set; }
+        public required string Location { get; set; }
+        public required string Description { get; set; }
     }
 }

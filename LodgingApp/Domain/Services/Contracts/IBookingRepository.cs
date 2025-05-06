@@ -1,7 +1,7 @@
 ﻿using LodgingApp.Domain.Entities;
-using static LodgingApp.Domain.Interfaces.IRepository;
+using static LodgingApp.Domain.IRepository;
 
-namespace LodgingApp.Domain.Interfaces
+namespace LodgingApp.Domain.Services.Contracts
 {
     public interface IBookingRepository : IRepository<Booking> { }
 }

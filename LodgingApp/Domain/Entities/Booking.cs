@@ -10,9 +10,9 @@
         public decimal TotalPrice { get; set; }
         public BookingStatus Status { get; set; } = BookingStatus.Ожидание;
 
-        public User User { get; set; }
-        public Lodging Lodging { get; set; }
-        public Payment Payment { get; set; }
+        public required User User { get; set; }
+        public required Lodging Lodging { get; set; }
+        public Payment? Payment { get; set; }
     }
 
     public enum BookingStatus

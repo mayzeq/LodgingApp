@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using LodgingApp.Domain.Entities;
-using LodgingApp.Domain.Interfaces;
+using LodgingApp.Domain.Services.Contracts;
 
-namespace LodgingApp.Application.Services
+namespace LodgingApp.Domain.Services.UseCases
 {
     public class LodgingService
     {
