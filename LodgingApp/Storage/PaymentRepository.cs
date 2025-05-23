@@ -1,9 +1,8 @@
 ﻿using LodgingApp.Data;
 using LodgingApp.Domain.Entities;
-using LodgingApp.Domain.Services.Contracts;
+using LodgingApp.Domain.Repositories;
 
-
-namespace LodgingApp.Domain.Repositories
+namespace LodgingApp.Storage
 {
     public class PaymentRepository : Repository<Payment>, IPaymentRepository
     {

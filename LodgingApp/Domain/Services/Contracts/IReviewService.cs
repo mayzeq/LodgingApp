@@ -12,7 +12,7 @@ namespace LodgingApp.Domain.Services.Contracts
         /// </summary>
         /// <param name="review">Данные отзыва</param>
         /// <returns>Созданный отзыв</returns>
-        Task<Review> CreateAsync(Review review);
+        Task<Review> CreateAsync(int userId, int lodgingId, int rating, string comment);
 
         /// <summary>
         /// Получает отзывы по конкретному жилью

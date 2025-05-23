@@ -12,7 +12,7 @@ namespace LodgingApp.Domain.Services.Contracts
         /// </summary>
         /// <param name="lodging">Данные жилья</param>
         /// <returns>Созданное жилье</returns>
-        Task<Lodging> CreateAsync(Lodging lodging);
+        Task<Lodging> CreateAsync(Lodging lodging, int userId);
 
         /// <summary>
         /// Удаляет жилье
@@ -31,6 +31,6 @@ namespace LodgingApp.Domain.Services.Contracts
         /// </summary>
         /// <param name="id">Идентификатор жилья</param>
         /// <returns>Жилье или null, если не найдено</returns>
-        Task<Lodging> GetByIdAsync(int id);
+        Task<Lodging> GetLodgingByIdAsync(int lodgingId);
     }
 } 

@@ -5,13 +5,8 @@ namespace LodgingApp.Domain.ValueObjects
 {
     public class BookingRequest
     {
-        [Required]
-        public int UserId { get; set; }
-        [Required]
-        public int LodgingId { get; set; }
-        [Required]
-        public DateTime StartDate { get; set; }
-        [Required]
-        public DateTime EndDate { get; set; }
+        public required int LodgingId { get; set; }
+        public required DateTime StartDate { get; set; }
+        public required DateTime EndDate { get; set; }
     }
 }
