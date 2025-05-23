@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using LodgingApp.Domain.Entities;
 using LodgingApp.Domain.ValueObjects;
 using LodgingApp.Domain.Services.Contracts;
+using LodgingApp.Domain.Repositories;
 
 namespace LodgingApp.Domain.Services.UseCases
 {
@@ -69,10 +70,12 @@ namespace LodgingApp.Domain.Services.UseCases
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                    new Claim(ClaimTypes.Name, user.Username)
+                    new Claim("UserId", user.UserId.ToString()),
+                    new Claim("Username", user.Username)
                 }),
                 Expires = DateTime.UtcNow.AddHours(6),
+                Issuer = _config["Jwt:Issuer"],
+                Audience = _config["Jwt:Audience"],
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature)

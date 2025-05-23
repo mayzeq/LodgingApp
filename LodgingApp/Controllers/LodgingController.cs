@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using LodgingApp.Domain.ValueObjects;
 using LodgingApp.Domain.Services.Contracts;
+using System.Security.Claims;
 
-namespace LodgingApp.API.Controllers
+namespace LodgingApp.Controllers
 {
     /// <summary>
     /// Контроллер для управления жильем
@@ -35,6 +36,7 @@ namespace LodgingApp.API.Controllers
         /// <response code="200">Объявление успешно создано</response>
         /// <response code="400">Некорректные данные</response>
         /// <response code="401">Требуется авторизация</response>
+        [Authorize]
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Create([FromQuery] LodgingCreation dto)
@@ -45,7 +47,12 @@ namespace LodgingApp.API.Controllers
             try
             {
                 var lodging = _mapper.Map<Domain.Entities.Lodging>(dto);
-                var result = await _service.CreateAsync(lodging);
+
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+                if (userIdClaim == null) return Unauthorized("UserId не найден в токене");
+                var userId = int.Parse(userIdClaim.Value);
+
+                var result = await _service.CreateAsync(lodging, userId);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -57,19 +64,19 @@ namespace LodgingApp.API.Controllers
         /// <summary>
         /// Удаляет объявление о жилье
         /// </summary>
-        /// <param name="id">Идентификатор жилья</param>
+        /// <param name="lodginhId">Идентификатор жилья</param>
         /// <returns>Нет содержимого</returns>
-        /// <response code="204">Объявление успешно удалено</response>
+        /// <response code="200">Объявление успешно удалено</response>
         /// <response code="401">Требуется авторизация</response>
         /// <response code="404">Объявление не найдено</response>
-        [HttpDelete("{id}")]
         [Authorize]
-        public async Task<IActionResult> Delete(int id)
+        [HttpDelete("{lodginhId}")]
+        public async Task<IActionResult> Delete(int lodginhId)
         {
             try
             {
-                await _service.DeleteAsync(id);
-                return NoContent();
+                await _service.DeleteAsync(lodginhId);
+                return Ok("Объявление успешно удалено");
             }
             catch (Exception ex)
             {
@@ -99,18 +106,18 @@ namespace LodgingApp.API.Controllers
         /// <summary>
         /// Получает объявление по идентификатору
         /// </summary>
-        /// <param name="id">Идентификатор жилья</param>
+        /// <param name="lodginhId">Идентификатор жилья</param>
         /// <returns>Объявление</returns>
         /// <response code="200">Объявление успешно получено</response>
         /// <response code="404">Объявление не найдено</response>
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        [HttpGet("{lodginhId}")]
+        public async Task<IActionResult> GetById(int lodginhId)
         {
             try
             {
-                var lodging = await _service.GetByIdAsync(id);
+                var lodging = await _service.GetLodgingByIdAsync(lodginhId);
                 if (lodging == null)
-                    return NotFound($"Объявление с идентификатором {id} не найдено");
+                    return NotFound($"Объявление с идентификатором {lodginhId} не найдено");
 
                 return Ok(lodging);
             }

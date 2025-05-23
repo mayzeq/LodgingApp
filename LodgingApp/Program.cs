@@ -1,9 +1,4 @@
-using System;
 using System.Text;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,10 +6,11 @@ using Microsoft.OpenApi.Models;
 using LodgingApp.Data;
 using LodgingApp.Application.Options;
 using LodgingApp.Application.Mapping;
-using AutoMapper;
-using LodgingApp.Domain.Repositories;
 using LodgingApp.Domain.Services.UseCases;
 using LodgingApp.Domain.Services.Contracts;
+using System.Text.Json.Serialization;
+using LodgingApp.Storage;
+using LodgingApp.Domain.Repositories;
 
 namespace LodgingApp
 {
@@ -28,42 +24,41 @@ namespace LodgingApp
                 opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.RequireHttpsMetadata = false;
-                options.SaveToken = true;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"])),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ClockSkew = TimeSpan.Zero
+                    ValidIssuer = "LodgingApp",
+                    ValidAudience = "LodgingAppUsers",
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your_super_secret_key_here_1234567890"))
                 };
             });
 
-            builder.Services.AddAuthorization();
-
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IAdminRepository, AdminRepository>();
             builder.Services.AddScoped<ILodgingRepository, LodgingRepository>();
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
             builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
             builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
-            builder.Services.AddScoped<BookingService>();
-            builder.Services.AddScoped<PaymentService>();
-            builder.Services.AddScoped<ReviewService>();
-            builder.Services.AddScoped<LodgingService>();
-            builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<IBookingService, BookingService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<IReviewService, ReviewService>();
+            builder.Services.AddScoped<ILodgingService, LodgingService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
 
             builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers().AddJsonOptions(x =>
+            {
+                x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                x.JsonSerializerOptions.WriteIndented = true; // для форматирования
+            });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddCors(options =>
@@ -74,20 +69,30 @@ namespace LodgingApp
 
             builder.Services.AddSwaggerGen(c =>
             {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "LodgingApp API", Version = "v1" });
+
+                var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    In = ParameterLocation.Header,
-                    Description = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ 'Bearer {token}'",
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
                     Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
                 });
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement{
                     {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-                        }, new string[] {}
+                        new OpenApiSecurityScheme{
+                            Reference = new OpenApiReference{
+                                Type=ReferenceType.SecurityScheme,
+                                Id="Bearer"
+                            }
+                        },
+                        new string[]{}
                     }
                 });
             });

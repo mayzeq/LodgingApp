@@ -18,15 +18,13 @@ namespace LodgingApp.Domain.Services.Contracts
         Task<Booking> CreateAsync(int userId, int lodgingId, DateTime start, DateTime end);
 
         /// <summary>
-        /// Подтверждает бронирование
-        /// </summary>
-        /// <param name="bookingId">Идентификатор бронирования</param>
-        Task ConfirmAsync(int bookingId);
-
-        /// <summary>
         /// Отменяет бронирование
         /// </summary>
         /// <param name="bookingId">Идентификатор бронирования</param>
-        Task CancelAsync(int bookingId);
+        Task CancelAsync(int bookingId, int userId);
+
+        Task<IEnumerable<Booking>> GetByUserAsync(int userId);
+
+        Task<Booking> GetBookingByIdAsync(int bookingId);
     }
 } 

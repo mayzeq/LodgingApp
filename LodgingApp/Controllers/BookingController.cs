@@ -1,8 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
+using LodgingApp.Domain.Entities;
 using LodgingApp.Domain.ValueObjects;
 using LodgingApp.Domain.Services.Contracts;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
-namespace LodgingApp.API.Controllers
+namespace LodgingApp.Controllers
 {
     /// <summary>
     /// Контроллер для управления бронированиями
@@ -22,43 +26,91 @@ namespace LodgingApp.API.Controllers
         /// <summary>
         /// Создает новое бронирование
         /// </summary>
-        /// <param name="dto">Данные для создания бронирования</param>
-        /// <returns>Созданное бронирование</returns>
+        /// <param name="dto">Объект запроса на бронирование</param>
+        /// <returns>Результат действия с данными созданного бронирования</returns>
         /// <response code="200">Бронирование успешно создано</response>
-        /// <response code="400">Некорректные данные</response>
+        /// <response code="400">Ошибочные данные в запросе</response>
+        /// <response code="401">Пользователь не авторизован</response>
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create([FromQuery] BookingRequest dto)
         {
-            var booking = await _service.CreateAsync(dto.UserId, dto.LodgingId, dto.StartDate, dto.EndDate);
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+            if (userIdClaim == null) return Unauthorized("UserId не найден в токене");
+            var userId = int.Parse(userIdClaim.Value);
+
+            var booking = await _service.CreateAsync(userId, dto.LodgingId, dto.StartDate, dto.EndDate);
             return Ok(booking);
         }
 
         /// <summary>
-        /// Подтверждает бронирование
+        /// Отменяет бронирование пользователя
         /// </summary>
-        /// <param name="id">Идентификатор бронирования</param>
-        /// <returns>Нет содержимого</returns>
-        /// <response code="204">Бронирование успешно подтверждено</response>
+        /// <param name="bookingId">Идентификатор бронирования</param>
+        /// <returns>Результат действия</returns>
+        /// <response code="200">Бронирование успешно отменено</response>
+        /// <response code="403">Недостаточно прав для отмены</response>
         /// <response code="404">Бронирование не найдено</response>
-        [HttpPatch("{id:int}/confirm")]
-        public async Task<IActionResult> Confirm(int id)
+        [Authorize]
+        [HttpPatch("{bookingId}/cancel")]
+        public async Task<IActionResult> Cancel(int bookingId)
         {
-            await _service.ConfirmAsync(id);
-            return NoContent();
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+            if (userIdClaim == null)
+                return Unauthorized("Идентификатор пользователя не найден в токене");
+
+            int userId = int.Parse(userIdClaim.Value);
+
+            try
+            {
+                await _service.CancelAsync(bookingId, userId);
+                return Ok("Бронирование успешно отменено");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid("Недостаточно прав для отмены данного бронирования");
+            }
+            catch (Exception ex)
+            {
+                return NotFound($"Ошибка при отмене бронирования: {ex.Message}");
+            }
         }
 
         /// <summary>
-        /// Отменяет бронирование
+        /// Получает все бронирования указанного пользователя
         /// </summary>
-        /// <param name="id">Идентификатор бронирования</param>
-        /// <returns>Нет содержимого</returns>
-        /// <response code="204">Бронирование успешно отменено</response>
-        /// <response code="404">Бронирование не найдено</response>
-        [HttpPatch("{id:int}/cancel")]
-        public async Task<IActionResult> Cancel(int id)
+        /// <param name="userId">Идентификатор пользователя</param>
+        /// <returns>Список бронирований</returns>
+        /// <response code="200">Список успешно получен</response>
+        [HttpGet("by-user/{userId}")]
+        public async Task<IActionResult> GetByUser(int userId)
         {
-            await _service.CancelAsync(id);
-            return NoContent();
+            var bookings = await _service.GetByUserAsync(userId);
+            return Ok(bookings);
+        }
+
+        /// <summary>
+        /// Получает конкретное бронирование по идентификатору
+        /// </summary>
+        /// <param name="bookingId">Идентификатор бронирования</param>
+        /// <returns>Бронирование</returns>
+        /// <response code="200">Бронирование найдено</response>
+        /// <response code="404">Бронирование не найдено</response>
+        [HttpGet("{bookingId}")]
+        public async Task<IActionResult> GetById(int bookingId)
+        {
+            try
+            {
+                var booking = await _service.GetBookingByIdAsync(bookingId);
+                if (booking == null)
+                    return NotFound($"Объявление с идентификатором {bookingId} не найдено");
+
+                return Ok(booking);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Ошибка при получении объявления: {ex.Message}");
+            }
         }
     }
 }

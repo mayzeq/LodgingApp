@@ -2,7 +2,7 @@
 using LodgingApp.Domain.ValueObjects;
 using LodgingApp.Domain.Services.Contracts;
 
-namespace LodgingApp.API.Controllers
+namespace LodgingApp.Controllers
 {
     /// <summary>
     /// Контроллер для управления аутентификацией и авторизацией
@@ -30,7 +30,7 @@ namespace LodgingApp.API.Controllers
         public async Task<IActionResult> Register([FromQuery] RegistrationRequest dto)
         {
             var user = await _auth.RegisterAsync(dto);
-            return Ok(new { user.UserId, user.Username, user.Email });
+            return Ok(new { user.UserId, user.Username, user.Email, user.PhoneNumber});
         }
 
         /// <summary>

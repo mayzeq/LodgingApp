@@ -4,10 +4,7 @@ namespace LodgingApp.Domain.ValueObjects
 {
     public class ReviewCreation
     {
-        [Required]
-        public int UserId { get; set; }
-        [Required]
-        public int LodgingId { get; set; }
+        public required int LodgingId { get; set; }
         [Range(1, 5)]
         public int Rating { get; set; }
         public string? Comment { get; set; }
