@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel - Рабочее место</title>
+    <link rel="stylesheet" href="/css/style.css?v=6">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <h1>Hotel</h1>
+            <p id="session-status">Пользователь</p>
+            <nav>
+                <button class="menu-item active" data-view="rooms" data-roles="admin,guest">Номера</button>
+                <button class="menu-item" data-view="guests" data-roles="guest">Профиль</button>
+                <button class="menu-item" data-view="booking" data-roles="admin,guest">Бронирование</button>
+                <button class="menu-item" data-view="payments" data-roles="admin">Оплаты</button>
+                <button class="menu-item" data-view="services" data-roles="admin">Услуги</button>
+                <button class="menu-item" data-view="profile" data-roles="admin,guest">Мои брони</button>
+            </nav>
+            <button id="logout-btn" class="btn btn-secondary" type="button">Выйти</button>
+        </aside>
+
+        <main class="workspace">
+            <section id="rooms-view" class="view active">
+                <div class="view-header">
+                    <h2>Номерной фонд</h2>
+                    <button class="btn btn-primary" id="refresh-rooms-btn" type="button">Обновить</button>
+                </div>
+                <div class="room-toolbar">
+                    <div class="room-filters">
+                        <label class="small">Поиск
+                            <input id="rooms-search" placeholder="Напр. 305 или люкс">
+                        </label>
+                        <label class="small">Статус
+                            <select id="rooms-status-filter">
+                                <option value="">Все</option>
+                                <option value="available">Доступные на даты</option>
+                                <option value="busy">Занятые на даты</option>
+                            </select>
+                        </label>
+                        <label class="small">Заезд
+                            <input id="rooms-checkin" type="date">
+                        </label>
+                        <label class="small">Выезд
+                            <input id="rooms-checkout" type="date">
+                        </label>
+                    </div>
+                    <div class="muted" id="rooms-count"></div>
+                </div>
+                <div id="rooms-grid" class="room-grid"></div>
+                <div class="panel" id="rooms-selected"></div>
+            </section>
+
+            <section id="guests-view" class="view">
+                <h2>Профиль гостя</h2>
+                <form id="guest-form" class="form-grid">
+                    <label class="hidden-field">ID пользователя <input id="guest-user-id" type="number" min="1" required></label>
+                    <label>Фамилия <input id="guest-surname" required></label>
+                    <label>Имя <input id="guest-first-name" required></label>
+                    <label>Отчество <input id="guest-patronymic"></label>
+                    <label>Дата рождения <input id="guest-birthdate" type="date" required></label>
+                    <label>Паспорт РФ <input id="guest-passport" maxlength="11" placeholder="1234 567890" required></label>
+                    <button class="btn btn-primary" type="submit">Сохранить</button>
+                </form>
+                <div class="panel" id="guest-result"></div>
+            </section>
+
+            <section id="booking-view" class="view">
+                <div class="view-header">
+                    <h2>Бронирование</h2>
+                    <div class="muted" id="booking-hint">Выберите номер в разделе “Номера” или введите ID вручную.</div>
+                </div>
+                <div class="booking-layout">
+                    <div class="booking-left">
+                        <div class="panel booking-room-card" id="booking-room-card">
+                            <div class="room-card">
+                                <img id="booking-room-image" class="room-photo" src="/images/room-default.svg" alt="Фото номера">
+                                <div class="room-meta">
+                                    <div class="room-title" id="booking-room-title">Номер не выбран</div>
+                                    <div class="room-sub" id="booking-room-sub">Нажмите на строку в “Номера”, чтобы выбрать</div>
+                                </div>
+                            </div>
+                        </div>
+                        <form id="booking-form" class="form-grid">
+                            <label class="hidden-field">ID гостя <input id="booking-guest-id" type="number" min="1" required></label>
+                            <label class="hidden-field">ID номера <input id="booking-room-id" type="number" min="1" required></label>
+                            <label>Дата заезда <input id="booking-start-date" type="date" required></label>
+                            <label>Дата выезда <input id="booking-end-date" type="date" required></label>
+                            <button class="btn btn-primary" type="submit">Создать бронь</button>
+                        </form>
+                        <div class="panel" id="booking-result"></div>
+                        <div class="panel">
+                            <div class="view-header compact">
+                                <h3>Доп. услуги к выбранной брони</h3>
+                                <button class="btn btn-secondary" id="refresh-services-btn" type="button">Обновить</button>
+                            </div>
+                            <div class="muted">Сначала создайте бронь, затем выберите её в списке справа.</div>
+                            <div class="service-picker">
+                                <select id="service-select"></select>
+                                <input id="service-qty" type="number" min="1" value="1">
+                                <button class="btn btn-secondary" id="add-service-btn" type="button">Добавить</button>
+                            </div>
+                            <div id="service-add-result" class="muted"></div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="view-header compact">
+                                <h3>Оплата выбранной брони</h3>
+                            </div>
+                            <div class="muted">Демо-форма: данные никуда не сохраняются, используется API платежей.</div>
+                            <div class="form-grid">
+                                <label>Номер карты <input id="pay-card" inputmode="numeric" placeholder="0000 0000 0000 0000"></label>
+                                <label>Срок (MM/YY) <input id="pay-exp" placeholder="12/30"></label>
+                                <label>CVC <input id="pay-cvc" inputmode="numeric" placeholder="123"></label>
+                                <button class="btn btn-primary" id="pay-now-btn" type="button">Оплатить</button>
+                            </div>
+                            <div id="pay-result" class="muted"></div>
+                        </div>
+                    </div>
+                    <div class="booking-right">
+                        <div class="panel">
+                            <div class="view-header compact">
+                                <h3>Последние брони пользователя</h3>
+                                <button class="btn btn-secondary" id="refresh-my-bookings-btn" type="button">Обновить</button>
+                            </div>
+                            <div id="my-bookings-cards-inline" class="cards"></div>
+                            <div id="my-bookings-inline-message" class="muted"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="payments-view" class="view">
+                <h2>Оплаты</h2>
+                <div class="panel">
+                    <div class="view-header compact">
+                        <h3>Все платежи (админ)</h3>
+                        <button class="btn btn-secondary" id="refresh-payments-btn" type="button">Обновить</button>
+                    </div>
+                    <div id="payments-admin" class="cards"></div>
+                </div>
+                <form id="payment-form" class="form-grid">
+                    <label>ID заказа <input id="payment-order-id" type="number" min="1" required></label>
+                    <label>Сумма <input id="payment-amount" type="number" step="0.01" min="0.01" required></label>
+                    <label>Метод оплаты <input id="payment-method" value="card"></label>
+                    <button class="btn btn-primary" type="submit">Создать платеж</button>
+                </form>
+                <form id="confirm-payment-form" class="form-grid">
+                    <label>ID платежа <input id="confirm-payment-id" type="number" min="1" required></label>
+                    <button class="btn btn-secondary" type="submit">Подтвердить платеж</button>
+                </form>
+                <div class="panel" id="payment-result"></div>
+            </section>
+
+            <section id="services-view" class="view">
+                <h2>Дополнительные услуги</h2>
+                <div class="panel">
+                    <div class="muted">Админ: создание/редактирование/удаление услуг.</div>
+                </div>
+                <form id="service-form" class="form-grid">
+                    <label>Название услуги <input id="service-name" required></label>
+                    <label>Описание <textarea id="service-description" rows="2"></textarea></label>
+                    <label>Цена <input id="service-price" type="number" step="0.01" min="0" required></label>
+                    <label class="checkbox"><input id="service-included" type="checkbox"> Включена в тариф</label>
+                    <button class="btn btn-primary" type="submit">Создать услугу</button>
+                </form>
+                <form id="service-admin-form" class="form-grid">
+                    <label>ID услуги <input id="service-admin-id" type="number" min="1" required></label>
+                    <label>Название <input id="service-admin-name" required></label>
+                    <label>Описание <textarea id="service-admin-description" rows="2"></textarea></label>
+                    <label>Цена <input id="service-admin-price" type="number" step="0.01" min="0" required></label>
+                    <label class="checkbox"><input id="service-admin-included" type="checkbox"> Включена в тариф</label>
+                    <button class="btn btn-secondary" id="service-admin-update-btn" type="button">Обновить услугу</button>
+                    <button class="btn btn-danger" id="service-admin-delete-btn" type="button">Удалить услугу</button>
+                </form>
+                <form id="booking-service-form" class="form-grid">
+                    <label>ID брони <input id="booking-service-booking-id" type="number" min="1" required></label>
+                    <label>ID услуги <input id="booking-service-service-id" type="number" min="1" required></label>
+                    <label>Количество <input id="booking-service-quantity" type="number" min="1" value="1" required></label>
+                    <button class="btn btn-secondary" type="submit">Добавить в бронь</button>
+                </form>
+                <div class="panel" id="services-result"></div>
+            </section>
+
+            <section id="profile-view" class="view">
+                <h2>Мои брони</h2>
+                <form id="my-bookings-form" class="form-grid">
+                    <label class="hidden-field">ID пользователя <input id="my-user-id" type="number" min="1" required></label>
+                    <button class="btn btn-primary" type="submit">Загрузить брони</button>
+                </form>
+                <form id="cancel-booking-form" class="form-grid">
+                    <label class="hidden-field">ID бронирования <input id="cancel-booking-id" type="number" min="1" required></label>
+                    <button class="btn btn-danger" type="submit">Отменить бронирование</button>
+                </form>
+                <div class="panel">
+                    <div class="muted">Подсказка: можно отменить бронь прямо из карточки.</div>
+                    <div id="my-bookings-cards" class="cards"></div>
+                    <div id="my-bookings-result" class="muted"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="/js/app.js?v=6"></script>
+</body>
+</html>

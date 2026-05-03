@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel - Вход</title>
+    <link rel="stylesheet" href="/css/style.css?v=6">
+</head>
+<body class="auth-body">
+    <main class="auth-layout">
+        <section class="auth-side">
+            <h1>Hotel</h1>
+            <p>Информационная система гостиницы для бронирований, оплат и управления услугами.</p>
+        </section>
+        <section class="auth-card">
+            <div class="auth-tabs">
+                <button id="tab-login" class="auth-tab active" type="button">Вход</button>
+                <button id="tab-register" class="auth-tab" type="button">Регистрация</button>
+            </div>
+
+            <form id="login-form" class="auth-form active">
+                <h2>Добро пожаловать</h2>
+                <label>Логин
+                    <input id="login-username" required>
+                </label>
+                <label>Пароль
+                    <input id="login-password" type="password" required>
+                </label>
+                <button class="btn btn-primary" type="submit">Войти</button>
+            </form>
+
+            <form id="register-form" class="auth-form">
+                <h2>Создать аккаунт</h2>
+                <label>Логин
+                    <input id="reg-username" required>
+                </label>
+                <label>Пароль
+                    <input id="reg-password" type="password" minlength="6" required>
+                </label>
+                <label>Email
+                    <input id="reg-email" type="email" required>
+                </label>
+                <label>Телефон
+                    <input id="reg-phone" required>
+                </label>
+                <button class="btn btn-primary" type="submit">Зарегистрироваться</button>
+            </form>
+
+            <div id="auth-message" class="panel"></div>
+        </section>
+    </main>
+    <script src="/js/login.js?v=6"></script>
+</body>
+</html>
