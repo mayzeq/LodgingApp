@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotel - Рабочее место</title>
-    <link rel="stylesheet" href="/css/style.css?v=6">
+    <title>Hotel - Панель управления</title>
+    <link rel="stylesheet" href="/css/style.css?v=26">
 </head>
 <body>
     <div class="app-shell">
@@ -13,11 +13,14 @@
             <p id="session-status">Пользователь</p>
             <nav>
                 <button class="menu-item active" data-view="rooms" data-roles="admin,guest">Номера</button>
-                <button class="menu-item" data-view="guests" data-roles="guest">Профиль</button>
+                <button class="menu-item" data-view="room-admin" data-roles="admin">Управление номерами</button>
+                <button class="menu-item" data-view="guests" data-roles="admin,guest">Гости</button>
                 <button class="menu-item" data-view="booking" data-roles="admin,guest">Бронирование</button>
+                <button class="menu-item" data-view="bookings" data-roles="admin,guest">Бронирования</button>
                 <button class="menu-item" data-view="payments" data-roles="admin">Оплаты</button>
                 <button class="menu-item" data-view="services" data-roles="admin">Услуги</button>
-                <button class="menu-item" data-view="profile" data-roles="admin,guest">Мои брони</button>
+                <button class="menu-item" data-view="users" data-roles="admin">Пользователи</button>
+                <button class="menu-item" data-view="account" data-roles="guest">Мой аккаунт</button>
             </nav>
             <button id="logout-btn" class="btn btn-secondary" type="button">Выйти</button>
         </aside>
@@ -36,8 +39,8 @@
                         <label class="small">Статус
                             <select id="rooms-status-filter">
                                 <option value="">Все</option>
-                                <option value="available">Доступные на даты</option>
-                                <option value="busy">Занятые на даты</option>
+                                <option value="available">Свободны по датам</option>
+                                <option value="busy">Заняты по датам</option>
                             </select>
                         </label>
                         <label class="small">Заезд
@@ -46,162 +49,408 @@
                         <label class="small">Выезд
                             <input id="rooms-checkout" type="date">
                         </label>
+                        <p class="muted rooms-date-hint">Выезд — день, когда номер освобождается утром (после последней ночи). Одна ночь: заезд 10.03, выезд 11.03.</p>
                     </div>
                     <div class="muted" id="rooms-count"></div>
                 </div>
                 <div id="rooms-grid" class="room-grid"></div>
                 <div class="panel" id="rooms-selected"></div>
+                <p class="muted guest-only">Нажмите на карточку номера, затем откройте «Бронирование».</p>
+            </section>
+
+            <section id="room-admin-view" class="view">
+                <div class="view-header">
+                    <h2>Управление номерами</h2>
+                    <button class="btn btn-secondary" id="refresh-room-admin-btn" type="button">Обновить</button>
+                </div>
+                <p class="muted">Учётный статус: «свободен» или «на обслуживании». Занятость на даты — по бронированиям.</p>
+
+                <h3 class="section-title admin-section-heading">Номера</h3>
+                <div class="admin-split-layout">
+                    <div class="admin-split-list panel">
+                        <h4 class="panel-subtitle">Список номеров</h4>
+                        <div class="table-wrap admin-table-scroll">
+                            <table class="data-table admin-registry-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Номер</th>
+                                        <th>Этаж</th>
+                                        <th>Тип</th>
+                                        <th>Мест</th>
+                                        <th>Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-rooms-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="admin-split-form panel">
+                        <h4 class="panel-subtitle">Редактирование номера</h4>
+                        <form id="room-form" class="form-grid">
+                            <input id="room-form-id" type="hidden">
+                            <label>Номер <input id="room-form-number" required></label>
+                            <label>Этаж <input id="room-form-floor" type="number" min="1" required></label>
+                            <label>Тип номера <select id="room-form-type" required></select></label>
+                            <label>Статус (учётный)
+                                <select id="room-form-status">
+                                    <option value="available">Свободен</option>
+                                    <option value="booked">Занят</option>
+                                    <option value="maintenance">На обслуживании</option>
+                                </select>
+                            </label>
+                            <label>Фото URL <input id="room-form-photo"></label>
+                            <div class="inline-actions">
+                                <button class="btn btn-primary" type="submit">Сохранить</button>
+                                <button class="btn btn-secondary" id="room-form-reset-btn" type="button">Новый</button>
+                                <button class="btn btn-danger" id="room-form-delete-btn" type="button">Удалить</button>
+                            </div>
+                        </form>
+                        <div id="room-form-result" class="form-result"></div>
+                    </div>
+                </div>
+
+                <h3 class="section-title admin-section-heading">Типы номеров</h3>
+                <div class="admin-split-layout">
+                    <div class="admin-split-list panel">
+                        <h4 class="panel-subtitle">Список типов</h4>
+                        <div class="table-wrap admin-table-scroll">
+                            <table class="data-table admin-registry-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Тип</th>
+                                        <th>Описание</th>
+                                        <th>Мест</th>
+                                        <th>Цена / ночь</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="room-types-admin-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="admin-split-form panel">
+                        <h4 class="panel-subtitle">Редактирование типа</h4>
+                        <form id="room-type-form" class="form-grid">
+                            <input id="room-type-id" type="hidden">
+                            <label>Ключ (латиница) <input id="room-type-name" required placeholder="Standard"></label>
+                            <label>Описание <input id="room-type-description" placeholder="Для сайта"></label>
+                            <label>Макс. гостей <input id="room-type-max-guests" type="number" min="1" required></label>
+                            <label>Цена за ночь (₽) <input id="room-type-price" type="number" step="0.01" min="0" required></label>
+                            <div class="inline-actions">
+                                <button class="btn btn-primary" type="submit">Сохранить</button>
+                                <button class="btn btn-secondary" id="room-type-form-reset-btn" type="button">Новый</button>
+                                <button class="btn btn-danger" id="room-type-form-delete-btn" type="button">Удалить</button>
+                            </div>
+                        </form>
+                        <div id="room-type-form-result" class="form-result"></div>
+                    </div>
+                </div>
             </section>
 
             <section id="guests-view" class="view">
-                <h2>Профиль гостя</h2>
-                <form id="guest-form" class="form-grid">
-                    <label class="hidden-field">ID пользователя <input id="guest-user-id" type="number" min="1" required></label>
-                    <label>Фамилия <input id="guest-surname" required></label>
-                    <label>Имя <input id="guest-first-name" required></label>
-                    <label>Отчество <input id="guest-patronymic"></label>
-                    <label>Дата рождения <input id="guest-birthdate" type="date" required></label>
-                    <label>Паспорт РФ <input id="guest-passport" maxlength="11" placeholder="1234 567890" required></label>
-                    <button class="btn btn-primary" type="submit">Сохранить</button>
-                </form>
-                <div class="panel" id="guest-result"></div>
+                <div class="view-header">
+                    <h2>Гости</h2>
+                    <button class="btn btn-secondary" id="refresh-guests-btn" type="button">Обновить</button>
+                </div>
+                <div class="admin-only guest-admin-toolbar panel">
+                    <p class="muted">Клиент и гость: выберите из списка или укажите ID вручную.</p>
+                    <div class="filter-toolbar">
+                        <div class="filter-group">
+                            <span class="filter-label">Клиент (аккаунт)</span>
+                            <select id="guests-filter-owner-select"><option value="">Все клиенты</option></select>
+                            <input id="guests-filter-owner-id-manual" type="number" min="1" placeholder="или ID аккаунта">
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">Гость</span>
+                            <select id="guests-filter-guest-select"><option value="">Все в выборке</option></select>
+                            <input id="guests-filter-guest-id-manual" type="number" min="1" placeholder="или ID гостя">
+                        </div>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="btn btn-secondary" type="button" id="guests-filter-apply">Применить</button>
+                        <button class="btn btn-secondary" type="button" id="guests-filter-clear">Сбросить</button>
+                    </div>
+                </div>
+                <div class="guests-page-layout">
+                    <div class="guests-list-column">
+                        <div id="guests-list" class="cards guests-cards-list"></div>
+                        <p class="muted guests-list-hint" id="guests-list-hint">Выберите гостя в списке или нажмите «Новый гость».</p>
+                    </div>
+                    <div class="guests-editor-column">
+                        <div class="panel guest-owner-panel admin-only" id="guest-owner-panel">
+                            <h3 class="panel-subtitle">Владелец (аккаунт клиента)</h3>
+                            <p class="muted guest-owner-hint">Для нового гостя укажите, кому привязать запись.</p>
+                            <div class="filter-group">
+                                <span class="filter-label">Клиент</span>
+                                <select id="guests-owner-user-id" required></select>
+                                <input id="guests-owner-user-id-manual" type="number" min="1" placeholder="или ID аккаунта">
+                            </div>
+                        </div>
+                        <div class="panel guest-data-panel">
+                            <h3 class="panel-subtitle">Данные гостя</h3>
+                            <form id="guest-form" class="form-grid guest-form-fields">
+                                <input id="guest-id" type="hidden">
+                                <input id="guest-user-id" type="hidden">
+                                <label>Фамилия <input id="guest-surname" required></label>
+                                <label>Имя <input id="guest-first-name" required></label>
+                                <label>Отчество <input id="guest-patronymic"></label>
+                                <label>Дата рождения <input id="guest-birthdate" type="date" required></label>
+                                <label>Паспорт РФ <input id="guest-passport" maxlength="11" placeholder="1234 567890" required></label>
+                                <div class="inline-actions">
+                                    <button class="btn btn-primary" type="submit">Сохранить гостя</button>
+                                    <button class="btn btn-secondary" id="guest-form-reset-btn" type="button">Новый гость</button>
+                                </div>
+                            </form>
+                            <div id="guest-result" class="form-result"></div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <section id="booking-view" class="view">
-                <div class="view-header">
-                    <h2>Бронирование</h2>
-                    <div class="muted" id="booking-hint">Выберите номер в разделе “Номера” или введите ID вручную.</div>
+                <div class="view-header booking-view-header">
+                    <div>
+                        <h2>Бронирование</h2>
+                        <div class="muted" id="booking-hint">Выберите номер в разделе «Номера», затем добавьте гостей и создайте бронь.</div>
+                    </div>
+                    <button class="btn btn-primary is-hidden" id="open-pay-modal-btn" type="button">Оплата</button>
                 </div>
-                <div class="booking-layout">
-                    <div class="booking-left">
-                        <div class="panel booking-room-card" id="booking-room-card">
-                            <div class="room-card">
-                                <img id="booking-room-image" class="room-photo" src="/images/room-default.svg" alt="Фото номера">
-                                <div class="room-meta">
-                                    <div class="room-title" id="booking-room-title">Номер не выбран</div>
-                                    <div class="room-sub" id="booking-room-sub">Нажмите на строку в “Номера”, чтобы выбрать</div>
+                <div class="booking-layout" id="booking-flow">
+                    <div class="booking-layout-main">
+                        <div class="panel booking-prep-panel">
+                            <h3 class="section-title booking-panel-title">Номер и клиент</h3>
+                            <div class="booking-prep-grid">
+                            <div class="booking-prep-block">
+                                <h4 class="booking-block-title">Номер</h4>
+                                <div class="booking-room-card">
+                                    <div class="room-card room-card-horizontal">
+                                        <img id="booking-room-image" class="room-photo" src="/images/room-default.svg" alt="Фото номера">
+                                        <div class="room-meta">
+                                            <div class="room-title" id="booking-room-title">Номер не выбран</div>
+                                            <div class="room-sub" id="booking-room-sub">Выберите в разделе «Номера»</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <form id="booking-form" class="form-grid">
-                            <label class="hidden-field">ID гостя <input id="booking-guest-id" type="number" min="1" required></label>
-                            <label class="hidden-field">ID номера <input id="booking-room-id" type="number" min="1" required></label>
-                            <label>Дата заезда <input id="booking-start-date" type="date" required></label>
-                            <label>Дата выезда <input id="booking-end-date" type="date" required></label>
-                            <button class="btn btn-primary" type="submit">Создать бронь</button>
-                        </form>
-                        <div class="panel" id="booking-result"></div>
-                        <div class="panel">
-                            <div class="view-header compact">
-                                <h3>Доп. услуги к выбранной брони</h3>
-                                <button class="btn btn-secondary" id="refresh-services-btn" type="button">Обновить</button>
+                            <div class="booking-prep-block admin-only">
+                                <h4 class="booking-block-title">Клиент</h4>
+                                <p class="muted booking-step-note">Бронь за клиента — подгрузятся его гости.</p>
+                                <div class="filter-group">
+                                    <span class="filter-label">Аккаунт</span>
+                                    <select id="booking-client-user-id"></select>
+                                    <input id="booking-client-user-id-manual" type="number" min="1" placeholder="или ID">
+                                </div>
                             </div>
-                            <div class="muted">Сначала создайте бронь, затем выберите её в списке справа.</div>
-                            <div class="service-picker">
-                                <select id="service-select"></select>
-                                <input id="service-qty" type="number" min="1" value="1">
-                                <button class="btn btn-secondary" id="add-service-btn" type="button">Добавить</button>
                             </div>
-                            <div id="service-add-result" class="muted"></div>
                         </div>
 
-                        <div class="panel">
-                            <div class="view-header compact">
-                                <h3>Оплата выбранной брони</h3>
+                        <div class="panel booking-stay-panel">
+                            <h3 class="section-title booking-panel-title">Даты и гости</h3>
+                            <form id="booking-form" class="form-grid booking-dates-form">
+                                <input id="booking-room-id" type="hidden">
+                                <label>Заезд <input id="booking-start-date" type="date" required></label>
+                                <label>Выезд <input id="booking-end-date" type="date" required></label>
+                                <p class="muted form-hint booking-hint-inline">Выезд — следующий день после заезда (не та же дата).</p>
+                                <button class="btn btn-primary" id="booking-create-btn" type="submit">Создать бронь</button>
+                            </form>
+
+                            <div class="booking-guests-block">
+                                <div class="view-header compact">
+                                    <h4>Гости в бронировании</h4>
+                                    <div class="muted" id="booking-capacity-hint"></div>
+                                </div>
+                                <div id="booking-guests-list" class="cards compact-cards"></div>
                             </div>
-                            <div class="muted">Демо-форма: данные никуда не сохраняются, используется API платежей.</div>
-                            <div class="form-grid">
-                                <label>Номер карты <input id="pay-card" inputmode="numeric" placeholder="0000 0000 0000 0000"></label>
-                                <label>Срок (MM/YY) <input id="pay-exp" placeholder="12/30"></label>
-                                <label>CVC <input id="pay-cvc" inputmode="numeric" placeholder="123"></label>
-                                <button class="btn btn-primary" id="pay-now-btn" type="button">Оплатить</button>
-                            </div>
-                            <div id="pay-result" class="muted"></div>
+
+                            <details class="booking-extra-guest-details">
+                                <summary>Добавить гостя</summary>
+                                <form id="booking-extra-guest-form" class="form-grid form-grid-2col">
+                                    <label>Фамилия <input id="extra-guest-surname" required></label>
+                                    <label>Имя <input id="extra-guest-first-name" required></label>
+                                    <label>Отчество <input id="extra-guest-patronymic"></label>
+                                    <label>Дата рождения <input id="extra-guest-birthdate" type="date" required></label>
+                                    <label class="form-span-2">Паспорт РФ <input id="extra-guest-passport" maxlength="11" placeholder="1234 567890" required></label>
+                                    <button class="btn btn-secondary form-span-2" type="submit">Добавить в бронь</button>
+                                </form>
+                            </details>
+                            <div id="booking-result" class="form-result"></div>
+
                         </div>
                     </div>
-                    <div class="booking-right">
-                        <div class="panel">
-                            <div class="view-header compact">
-                                <h3>Последние брони пользователя</h3>
-                                <button class="btn btn-secondary" id="refresh-my-bookings-btn" type="button">Обновить</button>
+
+                    <div class="booking-layout-side">
+                        <div class="panel booking-side-panel">
+                            <h3 class="section-title booking-panel-title">Услуги</h3>
+                            <div class="muted" id="selected-booking-hint">Выберите бронь в «Бронирования» → «Выбрать».</div>
+                            <div class="service-picker booking-service-picker">
+                                <label class="service-picker-field">
+                                    <span class="filter-label">Кому</span>
+                                    <select id="booking-service-guest-id"></select>
+                                </label>
+                                <label class="service-picker-field">
+                                    <span class="filter-label">Услуга</span>
+                                    <select id="service-select"></select>
+                                </label>
+                                <label class="service-picker-field service-picker-qty">
+                                    <span class="filter-label">Кол-во</span>
+                                    <input id="service-qty" type="number" min="1" value="1">
+                                </label>
+                                <div class="service-picker-actions">
+                                    <button class="btn btn-secondary" id="add-service-btn" type="button">Добавить</button>
+                                    <button class="btn btn-secondary" id="refresh-services-btn" type="button">Обновить</button>
+                                </div>
                             </div>
-                            <div id="my-bookings-cards-inline" class="cards"></div>
-                            <div id="my-bookings-inline-message" class="muted"></div>
+                            <div id="service-add-result" class="muted"></div>
+                            <div id="booking-service-lines" class="booking-service-lines"></div>
                         </div>
+
                     </div>
                 </div>
             </section>
 
-            <section id="payments-view" class="view">
-                <h2>Оплаты</h2>
-                <div class="panel">
-                    <div class="view-header compact">
-                        <h3>Все платежи (админ)</h3>
-                        <button class="btn btn-secondary" id="refresh-payments-btn" type="button">Обновить</button>
-                    </div>
-                    <div id="payments-admin" class="cards"></div>
+            <section id="bookings-view" class="view">
+                <div class="view-header">
+                    <h2 id="bookings-view-title">Бронирования</h2>
+                    <button class="btn btn-primary" id="refresh-bookings-btn" type="button">Обновить</button>
                 </div>
-                <form id="payment-form" class="form-grid">
-                    <label>ID заказа <input id="payment-order-id" type="number" min="1" required></label>
-                    <label>Сумма <input id="payment-amount" type="number" step="0.01" min="0.01" required></label>
-                    <label>Метод оплаты <input id="payment-method" value="card"></label>
-                    <button class="btn btn-primary" type="submit">Создать платеж</button>
-                </form>
-                <form id="confirm-payment-form" class="form-grid">
-                    <label>ID платежа <input id="confirm-payment-id" type="number" min="1" required></label>
-                    <button class="btn btn-secondary" type="submit">Подтвердить платеж</button>
-                </form>
+                <div class="guest-only panel">
+                    <p class="muted">При отмене брони неподтверждённый платёж отменяется; услуги остаются в истории. Выберите бронь для оплаты или доп. услуг в разделе «Бронирование».</p>
+                </div>
+                <div class="admin-only panel">
+                    <p class="muted">Реестр всех броней. Списки подставляют ID; при необходимости введите значение вручную.</p>
+                    <div class="filter-toolbar bookings-filters">
+                        <div class="filter-row">
+                            <div class="filter-group"><span class="filter-label">Статус</span>
+                                <select id="bookings-status-filter"><option value="">Все</option><option value="confirmed">Подтверждено</option><option value="pending">Ожидает</option><option value="cancelled">Отменено</option></select></div>
+                            <div class="filter-group"><span class="filter-label">ID брони</span>
+                                <input id="bookings-id-manual" type="number" min="1" placeholder="Точный поиск"></div>
+                            <div class="filter-group"><span class="filter-label">Заезд с</span>
+                                <input id="bookings-from-filter" type="date"></div>
+                            <div class="filter-group"><span class="filter-label">Выезд по</span>
+                                <input id="bookings-to-filter" type="date"></div>
+                        </div>
+                        <div class="filter-row">
+                            <div class="filter-group"><span class="filter-label">Номер</span>
+                                <select id="bookings-room-select"><option value="">Все номера</option></select>
+                                <input id="bookings-room-id-manual" type="number" min="1" placeholder="или ID номера"></div>
+                            <div class="filter-group filter-group-wide"><span class="filter-label">Клиент</span>
+                                <select id="bookings-user-select"><option value="">Все клиенты</option></select>
+                                <input id="bookings-user-id-manual" type="number" min="1" placeholder="или ID аккаунта"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="bookings-list" class="cards"></div>
+                <div id="bookings-list-result" class="panel muted"></div>
+            </section>
+
+            <section id="payments-view" class="view">
+                <div class="view-header">
+                    <h2>Оплаты</h2>
+                    <button class="btn btn-secondary" id="refresh-payments-btn" type="button">Обновить</button>
+                </div>
+                <div class="panel filters-grid">
+                    <label>Статус
+                        <select id="payments-status-filter">
+                            <option value="">Все</option>
+                            <option value="created">Создан</option>
+                            <option value="confirmed">Оплачено</option>
+                            <option value="cancelled">Отменён</option>
+                        </select>
+                    </label>
+                    <label>С даты <input id="payments-from-filter" type="date"></label>
+                    <label>По дату <input id="payments-to-filter" type="date"></label>
+                </div>
+                <div id="payments-admin" class="cards"></div>
                 <div class="panel" id="payment-result"></div>
             </section>
 
             <section id="services-view" class="view">
-                <h2>Дополнительные услуги</h2>
-                <div class="panel">
-                    <div class="muted">Админ: создание/редактирование/удаление услуг.</div>
+                <div class="view-header">
+                    <h2>Услуги</h2>
+                    <button class="btn btn-secondary" id="refresh-services-admin-btn" type="button">Обновить</button>
                 </div>
+                <div id="services-admin-list" class="cards"></div>
                 <form id="service-form" class="form-grid">
+                    <input id="service-id" type="hidden">
                     <label>Название услуги <input id="service-name" required></label>
                     <label>Описание <textarea id="service-description" rows="2"></textarea></label>
                     <label>Цена <input id="service-price" type="number" step="0.01" min="0" required></label>
                     <label class="checkbox"><input id="service-included" type="checkbox"> Включена в тариф</label>
-                    <button class="btn btn-primary" type="submit">Создать услугу</button>
-                </form>
-                <form id="service-admin-form" class="form-grid">
-                    <label>ID услуги <input id="service-admin-id" type="number" min="1" required></label>
-                    <label>Название <input id="service-admin-name" required></label>
-                    <label>Описание <textarea id="service-admin-description" rows="2"></textarea></label>
-                    <label>Цена <input id="service-admin-price" type="number" step="0.01" min="0" required></label>
-                    <label class="checkbox"><input id="service-admin-included" type="checkbox"> Включена в тариф</label>
-                    <button class="btn btn-secondary" id="service-admin-update-btn" type="button">Обновить услугу</button>
-                    <button class="btn btn-danger" id="service-admin-delete-btn" type="button">Удалить услугу</button>
-                </form>
-                <form id="booking-service-form" class="form-grid">
-                    <label>ID брони <input id="booking-service-booking-id" type="number" min="1" required></label>
-                    <label>ID услуги <input id="booking-service-service-id" type="number" min="1" required></label>
-                    <label>Количество <input id="booking-service-quantity" type="number" min="1" value="1" required></label>
-                    <button class="btn btn-secondary" type="submit">Добавить в бронь</button>
+                    <div class="inline-actions">
+                        <button class="btn btn-primary" type="submit">Сохранить услугу</button>
+                        <button class="btn btn-secondary" id="service-form-reset-btn" type="button">Новая услуга</button>
+                        <button class="btn btn-danger" id="service-form-delete-btn" type="button">Удалить</button>
+                    </div>
                 </form>
                 <div class="panel" id="services-result"></div>
             </section>
 
-            <section id="profile-view" class="view">
-                <h2>Мои брони</h2>
-                <form id="my-bookings-form" class="form-grid">
-                    <label class="hidden-field">ID пользователя <input id="my-user-id" type="number" min="1" required></label>
-                    <button class="btn btn-primary" type="submit">Загрузить брони</button>
-                </form>
-                <form id="cancel-booking-form" class="form-grid">
-                    <label class="hidden-field">ID бронирования <input id="cancel-booking-id" type="number" min="1" required></label>
-                    <button class="btn btn-danger" type="submit">Отменить бронирование</button>
-                </form>
-                <div class="panel">
-                    <div class="muted">Подсказка: можно отменить бронь прямо из карточки.</div>
-                    <div id="my-bookings-cards" class="cards"></div>
-                    <div id="my-bookings-result" class="muted"></div>
+            <section id="users-view" class="view">
+                <div class="view-header">
+                    <h2>Пользователи</h2>
+                    <button class="btn btn-secondary" id="refresh-users-btn" type="button">Обновить</button>
                 </div>
+                <div id="users-list" class="cards"></div>
+                <form id="user-admin-form" class="form-grid panel">
+                    <input id="user-admin-id" type="hidden">
+                    <label>Логин <input id="user-admin-login" readonly title="Логин задаётся при регистрации и не меняется"></label>
+                    <p class="muted admin-only">Логин нельзя изменить после создания аккаунта — только роль, контакты, блокировка и пароль.</p>
+                    <label>Email <input id="user-admin-email" type="email"></label>
+                    <label>Телефон <input id="user-admin-phone"></label>
+                    <label>Роль
+                        <select id="user-admin-role">
+                            <option value="guest">Гость</option>
+                            <option value="admin">Администратор</option>
+                        </select>
+                    </label>
+                    <label class="checkbox"><input id="user-admin-active" type="checkbox" checked> Аккаунт активен</label>
+                    <label>Новый пароль <input id="user-admin-password" type="password" minlength="6" placeholder="Оставьте пустым, если не менять"></label>
+                    <div class="inline-actions">
+                        <button class="btn btn-primary" type="submit">Сохранить</button>
+                        <button class="btn btn-secondary" id="user-admin-reset-btn" type="button">Сбросить форму</button>
+                    </div>
+                </form>
+                <div class="panel" id="users-result"></div>
+            </section>
+
+            <section id="account-view" class="view">
+                <div class="view-header"><h2>Мой аккаунт</h2></div>
+                <p class="muted">Логин изменить нельзя. Обновите email, телефон и при необходимости пароль.</p>
+                <form id="account-form" class="form-grid account-form panel">
+                    <label>Логин <input id="account-login" readonly></label>
+                    <label>Email <input id="account-email" type="email" required></label>
+                    <label>Телефон <input id="account-phone"></label>
+                    <hr class="form-divider">
+                    <label>Текущий пароль <input id="account-current-password" type="password" placeholder="Для смены пароля"></label>
+                    <label>Новый пароль <input id="account-new-password" type="password" minlength="6" placeholder="Не менять — оставить пустым"></label>
+                    <button class="btn btn-primary" type="submit">Сохранить</button>
+                </form>
+                <div class="panel" id="account-result"></div>
             </section>
         </main>
     </div>
-    <script src="/js/app.js?v=6"></script>
+
+    <div id="pay-modal" class="modal" hidden>
+        <div class="modal-backdrop" data-pay-modal-close></div>
+        <div class="modal-dialog" role="dialog" aria-labelledby="pay-modal-title" aria-modal="true">
+            <div class="modal-header">
+                <h2 id="pay-modal-title">Оплата</h2>
+                <button class="btn btn-secondary btn-small" type="button" data-pay-modal-close aria-label="Закрыть">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="pay-booking-summary" class="pay-booking-summary"></div>
+                <div class="form-grid pay-form-compact">
+                    <label>Карта <input id="pay-card" inputmode="numeric" placeholder="0000 0000 0000 0000"></label>
+                    <label>Срок <input id="pay-exp" placeholder="12/30"></label>
+                    <label>CVC <input id="pay-cvc" inputmode="numeric" placeholder="123"></label>
+                    <button class="btn btn-primary" id="pay-now-btn" type="button">Оплатить</button>
+                </div>
+                <div id="pay-result" class="muted"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js?v=31"></script>
 </body>
 </html>

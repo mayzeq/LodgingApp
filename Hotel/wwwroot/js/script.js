@@ -228,6 +228,31 @@ function renderAuthInfo(message = "") {
     showResult("auth-info", text);
 }
 
+function roomTypeFields(rt) {
+    if (!rt || typeof rt !== "object") {
+        return { typeName: undefined, maxGuests: 0, pricePerNight: 0 };
+    }
+    return {
+        typeName: rt.typeName ?? rt.TypeName,
+        maxGuests: rt.maxGuests ?? rt.MaxGuests ?? 0,
+        pricePerNight: rt.pricePerNight ?? rt.PricePerNight ?? 0
+    };
+}
+
+function roomTypeLabelRu(typeName) {
+    if (typeName === undefined || typeName === null) return "—";
+    const raw = String(typeName).trim();
+    if (!raw) return "—";
+    const lower = raw.toLowerCase();
+    const map = {
+        standard: "Стандарт",
+        standart: "Стандарт",
+        deluxe: "Делюкс",
+        suite: "Люкс"
+    };
+    return map[lower] ?? raw;
+}
+
 async function loadRooms() {
     if (!state.currentUser) return;
     try {
@@ -249,8 +274,8 @@ function renderRooms(rooms) {
         row.innerHTML = `
             <td><strong>${item.roomId}</strong></td>
             <td>${escapeHtml(item.roomNumber)}</td>
-            <td>${escapeHtml(item.roomType?.typeName || "-")}</td>
-            <td>${item.roomType?.pricePerNight ?? "-"}</td>
+            <td>${escapeHtml(roomTypeLabelRu(roomTypeFields(item.roomType).typeName))}</td>
+            <td>${roomTypeFields(item.roomType).pricePerNight ?? "-"}</td>
             <td>${escapeHtml(item.status)}</td>
         `;
         row.addEventListener("click", () => selectRoom(item));
@@ -302,9 +327,9 @@ async function createBooking(event) {
             })
         });
         showJson("booking-result", booking);
-        if (booking.orderId) {
-            const paymentOrderId = document.getElementById("payment-order-id");
-            if (paymentOrderId) paymentOrderId.value = booking.orderId;
+        if (booking.bookingId) {
+            const paymentBookingId = document.getElementById("payment-booking-id");
+            if (paymentBookingId) paymentBookingId.value = booking.bookingId;
         }
     } catch (error) {
         showResult("booking-result", error.message, true);
@@ -318,7 +343,7 @@ async function createPayment(event) {
         const payment = await apiRequest("/Payments", {
             method: "POST",
             body: JSON.stringify({
-                orderId: Number(document.getElementById("payment-order-id")?.value),
+                bookingId: Number(document.getElementById("payment-booking-id")?.value),
                 amount: Number(document.getElementById("payment-amount")?.value),
                 paymentMethod: document.getElementById("payment-method")?.value.trim() || "card"
             })

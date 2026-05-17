@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Hotel.Data;
 using Hotel.Storage;
-using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace Hotel
 {
@@ -10,6 +10,8 @@ namespace Hotel
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var applySqlSchemaOnStartup = builder.Configuration.GetValue("DatabaseInitialization:ApplySqlSchemaOnStartup", true);
+            var seedDemoData = builder.Configuration.GetValue("DatabaseInitialization:SeedDemoData", true);
 
             builder.Services.AddDbContext<AppDbContext>(opt =>
                 opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -17,7 +19,7 @@ namespace Hotel
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>
                 {
-                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 });
             builder.Services.AddCors(options =>
             {
@@ -33,13 +35,16 @@ namespace Hotel
                 db.Database.EnsureCreated();
 
                 var schemaPath = Path.Combine(app.Environment.ContentRootPath, "postgresql_schema.sql");
-                if (File.Exists(schemaPath))
+                if (applySqlSchemaOnStartup && File.Exists(schemaPath))
                 {
                     var schemaSql = File.ReadAllText(schemaPath);
                     db.Database.ExecuteSqlRaw(schemaSql);
                 }
 
-                await DbSeeder.SeedAsync(db);
+                if (seedDemoData)
+                {
+                    await DbSeeder.SeedAsync(db);
+                }
             }
 
             app.UseHttpsRedirection();

@@ -9,11 +9,11 @@ namespace Hotel.Data
         public DbSet<Guest> Guests { get; set; }
         public DbSet<RoomType> RoomTypes { get; set; }
         public DbSet<Room> Rooms { get; set; }
-        public DbSet<Order> Orders { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Service> Services { get; set; }
         public DbSet<BookingService> BookingServices { get; set; }
+        public DbSet<BookingGuest> BookingGuests { get; set; }
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -23,11 +23,11 @@ namespace Hotel.Data
             modelBuilder.Entity<Guest>().ToTable("Guest");
             modelBuilder.Entity<RoomType>().ToTable("RoomType");
             modelBuilder.Entity<Room>().ToTable("Room");
-            modelBuilder.Entity<Order>().ToTable("Order");
             modelBuilder.Entity<Booking>().ToTable("Booking");
             modelBuilder.Entity<Payment>().ToTable("Payment");
             modelBuilder.Entity<Service>().ToTable("Service");
             modelBuilder.Entity<BookingService>().ToTable("BookingService");
+            modelBuilder.Entity<BookingGuest>().ToTable("BookingGuest");
 
             modelBuilder.Entity<User>()
                 .HasIndex(x => x.Login)
@@ -49,12 +49,6 @@ namespace Hotel.Data
                 .HasForeignKey(x => x.RoomTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Order>()
-                .HasOne(x => x.User)
-                .WithMany(x => x.Orders)
-                .HasForeignKey(x => x.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             modelBuilder.Entity<Booking>()
                 .HasOne(x => x.Guest)
                 .WithMany(x => x.Bookings)
@@ -67,16 +61,10 @@ namespace Hotel.Data
                 .HasForeignKey(x => x.RoomId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Booking>()
-                .HasOne(x => x.Order)
-                .WithMany(x => x.Bookings)
-                .HasForeignKey(x => x.OrderId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             modelBuilder.Entity<Payment>()
-                .HasOne(x => x.Order)
+                .HasOne(x => x.Booking)
                 .WithOne(x => x.Payment)
-                .HasForeignKey<Payment>(x => x.OrderId)
+                .HasForeignKey<Payment>(x => x.BookingId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<BookingService>()
@@ -89,6 +77,24 @@ namespace Hotel.Data
                 .HasOne(x => x.Service)
                 .WithMany(x => x.BookingServices)
                 .HasForeignKey(x => x.ServiceId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<BookingService>()
+                .HasOne(x => x.Guest)
+                .WithMany()
+                .HasForeignKey(x => x.GuestId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<BookingGuest>()
+                .HasOne(x => x.Booking)
+                .WithMany(x => x.BookingGuests)
+                .HasForeignKey(x => x.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BookingGuest>()
+                .HasOne(x => x.Guest)
+                .WithMany()
+                .HasForeignKey(x => x.GuestId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<User>()
