@@ -1,5 +1,6 @@
 using Hotel.Data;
 using Hotel.Domain.Entities;
+using Hotel.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,7 +21,7 @@ public class RoomsController : ControllerBase
     public async Task<IActionResult> GetRoomTypes()
     {
         var data = await _db.RoomTypes.OrderBy(x => x.RoomTypeId).ToListAsync();
-        return Ok(data);
+        return Ok(data.Select(BookingMappings.ToRoomTypeDto).ToList());
     }
 
     [HttpPost("types")]
@@ -28,7 +29,35 @@ public class RoomsController : ControllerBase
     {
         _db.RoomTypes.Add(roomType);
         await _db.SaveChangesAsync();
-        return Ok(roomType);
+        return Ok(BookingMappings.ToRoomTypeDto(roomType));
+    }
+
+    [HttpPut("types/{roomTypeId:int}")]
+    public async Task<IActionResult> UpdateRoomType(int roomTypeId, [FromBody] RoomType body)
+    {
+        var entity = await _db.RoomTypes.FirstOrDefaultAsync(x => x.RoomTypeId == roomTypeId);
+        if (entity is null) return NotFound("Тип номера не найден.");
+
+        entity.TypeName = body.TypeName;
+        entity.Description = body.Description;
+        entity.MaxGuests = body.MaxGuests;
+        entity.PricePerNight = body.PricePerNight;
+        await _db.SaveChangesAsync();
+        return Ok(BookingMappings.ToRoomTypeDto(entity));
+    }
+
+    [HttpDelete("types/{roomTypeId:int}")]
+    public async Task<IActionResult> DeleteRoomType(int roomTypeId)
+    {
+        var entity = await _db.RoomTypes.FirstOrDefaultAsync(x => x.RoomTypeId == roomTypeId);
+        if (entity is null) return NotFound("Тип номера не найден.");
+
+        var used = await _db.Rooms.AnyAsync(x => x.RoomTypeId == roomTypeId);
+        if (used) return Conflict("Нельзя удалить тип: есть номера с этим типом.");
+
+        _db.RoomTypes.Remove(entity);
+        await _db.SaveChangesAsync();
+        return Ok("Тип номера удален.");
     }
 
     [HttpGet]
@@ -39,10 +68,9 @@ public class RoomsController : ControllerBase
             .OrderBy(x => x.RoomId)
             .ToListAsync();
 
-        // If dates are provided, compute availability for the given range (time-based availability).
         if (checkInDate is null || checkOutDate is null || checkOutDate <= checkInDate)
         {
-            return Ok(rooms);
+            return Ok(rooms.Select(r => BookingMappings.ToRoomListItem(r)).ToList());
         }
 
         var start = checkInDate.Value;
@@ -59,19 +87,8 @@ public class RoomsController : ControllerBase
             .Distinct()
             .ToListAsync();
 
-        var result = rooms.Select(r => new
-        {
-            r.RoomId,
-            r.RoomTypeId,
-            r.RoomNumber,
-            r.Floor,
-            r.Status,
-            r.PhotoUrl,
-            r.RoomType,
-            IsAvailable = !busyRoomIds.Contains(r.RoomId)
-        });
-
-        return Ok(result);
+        var result = rooms.Select(r => BookingMappings.ToRoomListItem(r, !busyRoomIds.Contains(r.RoomId)));
+        return Ok(result.ToList());
     }
 
     [HttpPost]
@@ -82,7 +99,9 @@ public class RoomsController : ControllerBase
 
         _db.Rooms.Add(room);
         await _db.SaveChangesAsync();
-        return Ok(room);
+
+        var created = await _db.Rooms.Include(x => x.RoomType).FirstAsync(x => x.RoomId == room.RoomId);
+        return Ok(BookingMappings.ToRoomDto(created));
     }
 
     [HttpPut("{roomId:int}")]
@@ -101,7 +120,9 @@ public class RoomsController : ControllerBase
         entity.PhotoUrl = room.PhotoUrl;
 
         await _db.SaveChangesAsync();
-        return Ok(entity);
+
+        var updated = await _db.Rooms.Include(x => x.RoomType).FirstAsync(x => x.RoomId == roomId);
+        return Ok(BookingMappings.ToRoomDto(updated));
     }
 
     [HttpDelete("{roomId:int}")]

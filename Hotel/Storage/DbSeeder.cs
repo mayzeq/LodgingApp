@@ -131,15 +131,10 @@ public static class DbSeeder
             var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
             var room101 = await db.Rooms.FirstAsync(x => x.RoomNumber == "101");
 
-            var order1 = new Order { UserId = guestUser.UserId, TotalAmount = 2 * standard.PricePerNight, Status = "paid" };
-            db.Orders.Add(order1);
-            await db.SaveChangesAsync();
-
             var booking1 = new Booking
             {
                 GuestId = guestProfile.GuestId,
                 RoomId = room101.RoomId,
-                OrderId = order1.OrderId,
                 CheckInDate = today.AddDays(5),
                 CheckOutDate = today.AddDays(7),
                 TotalPrice = 2 * standard.PricePerNight,
@@ -147,11 +142,12 @@ public static class DbSeeder
             };
             db.Bookings.Add(booking1);
             room101.Status = "booked";
+            await db.SaveChangesAsync();
 
             var payment1 = new Payment
             {
-                OrderId = order1.OrderId,
-                Amount = order1.TotalAmount,
+                BookingId = booking1.BookingId,
+                Amount = booking1.TotalPrice,
                 PaymentMethod = "card",
                 TransactionId = Guid.NewGuid().ToString("N"),
                 Status = "confirmed"
@@ -159,6 +155,19 @@ public static class DbSeeder
             db.Payments.Add(payment1);
 
             await db.SaveChangesAsync();
+
+            // keep BookingGuest link in sync with primary guest
+            var linkExists = await db.BookingGuests.AnyAsync(x => x.BookingId == booking1.BookingId && x.GuestId == guestProfile.GuestId);
+            if (!linkExists)
+            {
+                db.BookingGuests.Add(new BookingGuest
+                {
+                    BookingId = booking1.BookingId,
+                    GuestId = guestProfile.GuestId,
+                    IsPrimary = true
+                });
+                await db.SaveChangesAsync();
+            }
         }
     }
 }

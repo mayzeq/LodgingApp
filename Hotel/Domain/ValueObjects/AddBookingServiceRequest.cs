@@ -10,6 +10,8 @@ public class AddBookingServiceRequest
     [Required]
     public int ServiceId { get; set; }
 
+    public int? GuestId { get; set; }
+
     [Range(1, int.MaxValue)]
     public int Quantity { get; set; } = 1;
 }

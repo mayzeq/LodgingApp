@@ -1,6 +1,7 @@
 using Hotel.Data;
 using Hotel.Domain.Entities;
 using Hotel.Domain.ValueObjects;
+using Hotel.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,7 +22,7 @@ public class ServicesController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var data = await _db.Services.OrderBy(x => x.ServiceId).ToListAsync();
-        return Ok(data);
+        return Ok(data.Select(BookingMappings.ToServiceBriefDto).ToList());
     }
 
     [HttpPost]
@@ -29,7 +30,7 @@ public class ServicesController : ControllerBase
     {
         _db.Services.Add(service);
         await _db.SaveChangesAsync();
-        return Ok(service);
+        return Ok(BookingMappings.ToServiceBriefDto(service));
     }
 
     [HttpPut("{serviceId:int}")]
@@ -43,7 +44,7 @@ public class ServicesController : ControllerBase
         entity.Price = service.Price;
         entity.IsIncluded = service.IsIncluded;
         await _db.SaveChangesAsync();
-        return Ok(entity);
+        return Ok(BookingMappings.ToServiceBriefDto(entity));
     }
 
     [HttpDelete("{serviceId:int}")]
@@ -63,17 +64,29 @@ public class ServicesController : ControllerBase
     [HttpPost("booking-link")]
     public async Task<IActionResult> AddToBooking([FromBody] AddBookingServiceRequest request)
     {
-        var booking = await _db.Bookings.FirstOrDefaultAsync(x => x.BookingId == request.BookingId);
+        var booking = await _db.Bookings
+            .Include(x => x.BookingGuests)
+            .FirstOrDefaultAsync(x => x.BookingId == request.BookingId);
         if (booking is null) return NotFound("Бронирование не найдено.");
 
         var service = await _db.Services.FirstOrDefaultAsync(x => x.ServiceId == request.ServiceId);
         if (service is null) return NotFound("Услуга не найдена.");
+
+        if (request.GuestId.HasValue)
+        {
+            var guestInBooking = booking.BookingGuests.Any(x => x.GuestId == request.GuestId.Value);
+            if (!guestInBooking)
+            {
+                return BadRequest("Указанный гость не входит в выбранное бронирование.");
+            }
+        }
 
         var totalCost = service.Price * request.Quantity;
         var link = new BookingService
         {
             BookingId = request.BookingId,
             ServiceId = request.ServiceId,
+            GuestId = request.GuestId,
             Quantity = request.Quantity,
             TotalCost = totalCost
         };
@@ -81,13 +94,37 @@ public class ServicesController : ControllerBase
         _db.BookingServices.Add(link);
         booking.TotalPrice += totalCost;
 
-        var order = await _db.Orders.FirstOrDefaultAsync(x => x.OrderId == booking.OrderId);
-        if (order is not null)
+        await _db.SaveChangesAsync();
+
+        var line = await _db.BookingServices
+            .Include(x => x.Service)
+            .Include(x => x.Guest)
+            .FirstAsync(x => x.BookingServiceId == link.BookingServiceId);
+
+        return Ok(BookingMappings.ToBookingServiceLineDto(line));
+    }
+
+    [HttpDelete("booking-link/{bookingServiceId:int}")]
+    public async Task<IActionResult> RemoveFromBooking(int bookingServiceId)
+    {
+        var line = await _db.BookingServices
+            .Include(x => x.Booking)
+            .FirstOrDefaultAsync(x => x.BookingServiceId == bookingServiceId);
+        if (line is null) return NotFound("Позиция услуги не найдена.");
+
+        var booking = line.Booking;
+        if (booking is null) return NotFound("Бронирование не найдено.");
+
+        if (booking.Status == "cancelled")
         {
-            order.TotalAmount += totalCost;
+            return BadRequest("Нельзя изменять услуги отменённой брони.");
         }
 
+        booking.TotalPrice -= line.TotalCost;
+        if (booking.TotalPrice < 0) booking.TotalPrice = 0;
+
+        _db.BookingServices.Remove(line);
         await _db.SaveChangesAsync();
-        return Ok(link);
+        return Ok("Позиция услуги удалена.");
     }
 }
